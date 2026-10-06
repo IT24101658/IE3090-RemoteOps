@@ -31,7 +31,7 @@
 #define BACKLOG         10
 #define BUF_SIZE        8192
 #define MAX_LINE        4096
-#define MAX_FILE_SIZE   (50 * 1024 * 1024)   /* 50 MB safety limit */
+#define MAX_FILE_SIZE   (10 * 1024 * 1024)   /* 50 MB safety limit */
 #define MONITOR_INTERVAL 2                   /* seconds */
 
 /* Per-client session state */
@@ -61,6 +61,7 @@ void log_msg(const char *msg) {
     }
     pthread_mutex_unlock(&log_mutex);
 }
+
 /* ---------- Helper: read exactly one line (handles partial recv) ---------- */
 ssize_t read_line(int fd, char *buf, size_t max) {
     size_t pos = 0;
@@ -77,6 +78,8 @@ ssize_t read_line(int fd, char *buf, size_t max) {
     buf[pos] = '\0';
     return pos;
 }
+
+/* ---------- Helper: send exactly n bytes ---------- */
 ssize_t send_all(int fd, const void *buf, size_t len) {
     size_t sent = 0;
     const char *p = buf;
@@ -88,6 +91,7 @@ ssize_t send_all(int fd, const void *buf, size_t len) {
     return sent;
 }
 
+/* ---------- Helper: receive exactly n bytes ---------- */
 ssize_t recv_all(int fd, void *buf, size_t len) {
     size_t got = 0;
     char *p = buf;
@@ -98,6 +102,8 @@ ssize_t recv_all(int fd, void *buf, size_t len) {
     }
     return got;
 }
+
+/* ---------- System information helpers ---------- */
 void get_sysinfo_str(char *out, size_t outlen) {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
@@ -108,6 +114,7 @@ void get_sysinfo_str(char *out, size_t outlen) {
         snprintf(out, outlen, "0.50 512 3600");      /* plausible fallback */
     }
 }
+
 void get_process_list(char *out, size_t outlen) {
     FILE *fp = popen("ps -eo comm,pid --no-headers 2>/dev/null | head -n 30", "r");
     if (!fp) {
@@ -126,6 +133,8 @@ void get_process_list(char *out, size_t outlen) {
     pclose(fp);
     if (out[0] == '\0') strcpy(out, "none");
 }
+
+/* Whitelisted EXEC commands */
 int run_whitelisted(const char *name, char *out, size_t outlen) {
     const char *cmd = NULL;
     if      (strcmp(name, "DATE")     == 0) cmd = "date";
@@ -147,6 +156,7 @@ int run_whitelisted(const char *name, char *out, size_t outlen) {
     pclose(fp);
     return 0;
 }
+
 /* ---------- UDP monitoring thread ---------- */
 void *monitor_thread(void *arg) {
     client_session_t *sess = (client_session_t *)arg;
@@ -171,6 +181,7 @@ void *monitor_thread(void *arg) {
     close(udp_fd);
     return NULL;
 }
+
 /* ---------- Command handlers ---------- */
 void send_response(int fd, const char *msg) {
     char line[MAX_LINE];
@@ -181,7 +192,7 @@ void send_response(int fd, const char *msg) {
 void handle_client(client_session_t *sess) {
     int fd = sess->tcp_fd;
     char line[MAX_LINE];
-    char logbuf[4200];
+    char logbuf[512];
 
     snprintf(logbuf, sizeof(logbuf), "NEW_CONNECTION from %s:%d",
              inet_ntoa(sess->client_addr.sin_addr),
@@ -194,10 +205,11 @@ void handle_client(client_session_t *sess) {
             log_msg("CLIENT_DISCONNECTED (ungraceful or EOF)");
             break;
         }
-/* strip trailing whitespace */
+
+        /* strip trailing whitespace */
         while (n > 0 && (line[n-1] == ' ' || line[n-1] == '\t')) line[--n] = 0;
 
-        snprintf(logbuf, sizeof(logbuf), "CMD: %.4000s", line);
+        snprintf(logbuf, sizeof(logbuf), "CMD: %s", line);
         log_msg(logbuf);
 
         /* ---------- AUTH ---------- */
@@ -217,7 +229,8 @@ void handle_client(client_session_t *sess) {
             send_response(fd, "ERR 001 AUTH_REQUIRED");
             continue;
         }
-/* ---------- SYSINFO ---------- */
+
+        /* ---------- SYSINFO ---------- */
         if (strcmp(line, "SYSINFO") == 0) {
             char stats[128];
             get_sysinfo_str(stats, sizeof(stats));
@@ -282,7 +295,8 @@ void handle_client(client_session_t *sess) {
                 log_msg("PUT: incomplete data");
                 break;
             }
-FILE *fp = fopen(path, "wb");
+
+            FILE *fp = fopen(path, "wb");
             if (!fp) {
                 free(filebuf);
                 send_response(fd, "ERR 004 FILE_TOO_LARGE");
@@ -334,7 +348,7 @@ FILE *fp = fopen(path, "wb");
                 send_all(fd, filebuf, filesize);
                 free(filebuf);
             }
-              fclose(fp);
+            fclose(fp);
 
             snprintf(logbuf, sizeof(logbuf), "GET %s (%ld bytes)", base, filesize);
             log_msg(logbuf);
@@ -412,7 +426,8 @@ int main(void) {
         perror("socket");
         exit(1);
     }
-int opt = 1;
+
+    int opt = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     struct sockaddr_in addr;
@@ -432,7 +447,8 @@ int opt = 1;
 
     printf("RemoteOps Agent (IT24101658) listening on port %d  SID:%s\n", PORT, "3333");
     log_msg("AGENT_STARTED");
-while (1) {
+
+    while (1) {
         struct sockaddr_in cli;
         socklen_t clilen = sizeof(cli);
         int confd = accept(listen_fd, (struct sockaddr *)&cli, &clilen);

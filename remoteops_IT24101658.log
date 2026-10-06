@@ -9,3 +9,25 @@
 [2026-10-06 05:23:16] CMD:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 [2026-10-06 05:23:16] CLIENT_DISCONNECTED (ungraceful or EOF)
 [2026-10-06 05:23:16] SESSION_CLOSED
+[2026-10-06 06:14:24] RemoteOps Agent started
+[2026-10-06 06:14:59] Controller connected from 127.0.0.1:54206
+[2026-10-06 06:19:29] RemoteOps Agent started
+[2026-10-06 06:19:35] Controller connected from 127.0.0.1:37048
+[2026-10-06 06:30:58] RemoteOps Agent started
+[2026-10-06 06:31:03] Controller connected from 127.0.0.1:49148
+[2026-10-06 06:32:29] Controller connection closed
+[2026-10-06 06:49:12] AGENT_STARTED
+[2026-10-06 06:49:19] NEW_CONNECTION from 127.0.0.1:45280
+[2026-10-06 06:49:36] CMD: AUTH OPS-1658
+[2026-10-06 06:49:45] CMD: SYSINFO
+[2026-10-06 06:49:51] CMD: LISTPROC
+[2026-10-06 06:50:04] CMD: EXEC DATE
+[2026-10-06 06:50:14] CMD: EXEC BADCMD
+[2026-10-06 06:50:46] CMD: PUT myhost.txt 10
+[2026-10-06 06:50:46] PUT myhost.txt (10 bytes)
+[2026-10-06 06:50:55] CMD: GET myhost.txt
+[2026-10-06 06:50:55] GET myhost.txt (10 bytes)
+[2026-10-06 06:51:06] CMD: MONITOR START 9999
+[2026-10-06 06:51:41] CMD: MONITOR STOP
+[2026-10-06 06:51:50] CMD: QUIT
+[2026-10-06 06:51:50] SESSION_CLOSED
